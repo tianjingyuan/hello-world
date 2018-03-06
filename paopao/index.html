@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+    	<div style="margin:0 auto;width:1024px; height:704px;">
+    		<canvas id="app" width="1024px" height="704px"></canvas>
+    	</div>
+    	
+    </body>
+    <script>
+    var canvas = document.querySelectorAll("#app")[0];
+    	canvas.style.border="1px solid pink";
+    	var context = canvas.getContext("2d");
+    	const START = 0;	// 第一阶段:欢迎阶段
+		const STARTTING = 1;// 第二阶段:过渡动画阶段
+		const RUNNING = 2;	// 第三阶段:运行阶段
+		const PAUSED = 3;	// 第四阶段:暂停阶段
+		const GAMEOVER = 4;	// 第五阶段:结束阶段
+		const WIDTH = canvas.width;
+		const HEIGHT = canvas.height;
+		//首先state等于START欢迎阶段
+	var state = START;
+		//new一个构造函数用来保存图片路径
+		var bg = new Image();
+			bg.src = "./img/bg-1.jpg"
+		//把背景图的宽高 图片路径放在一个对象里
+		var bg_value = {
+			image:bg,
+			width:1024,
+			height:704
+		};
+		//这里创建一个BG函数体并接收bg_value数据
+		function BG(bg_value){
+			//初始化函数可能用到的数据
+			this.image = bg_value.image;
+			this.width = bg_value.width;
+			this.height = bg_value.height;
+			this.x1 = bg_value.width;
+			this.x2 = 0;
+			this.time = 0;
+			//这里用this.xleft创建drawImage方法绘制图形
+			this.xleft = function(){
+				context.drawImage(this.image,this.x1,0);// 第一张
+				context.drawImage(this.image,this.x2,0);// 第一张
+			}
+			//这里控制背景图片走动的速度和判断距离
+			this.step = function(){
+				this.time++;
+				if(this.time%5==0){
+					this.x1--;
+					this.x2--;
+				}
+				if(this.x1 < -WIDTH){
+					this.x1 = this.width;
+				}
+				if(this.x2 < -WIDTH){
+					this.x2 = this.width;
+				}
+			}
+		}
+		//这里创建一个构造函数并传值bg_value
+		var play_bg = new BG(bg_value);
+
+		//保存了游戏开始的按钮图片
+		var play = new Image();
+			play.src = "img/click.gif"
+
+		// 1-2 从第一阶段到第二阶段
+		canvas.onclick = function(){
+			// 保证游戏当前是第一阶段
+			if(state == START){
+				state = STARTTING;
+			}else if(state == STARTTING){//点击暂停
+				state = RUNNING;
+			}else if(state == RUNNING){//点击取消暂停
+				state = STARTTING;
+			}else if(state == GAMEOVER){//点击重新开始游戏
+				state = START
+			}
+		}
+
+		//进入第二阶段，创建函数体
+		function GAME_1(game_value){
+			this.image = game_value.image;
+			this.width = game_value.width;
+			this.height = game_value.height;
+			this.x = 0;
+			this.y = 65*2;
+			this.sx = 100;
+			this.sy = 520;
+			this.time = 0;
+			this.run = function(fox){
+				this.time++;
+				context.drawImage(this.image,this.x,this.y,40,65,this.sx,this.sy,40,65);
+				if(fox == 1){
+
+				}else{
+					if(this.time%20==0){
+		   				this.x+=40;
+		   				if(this.x==160){
+		  					this.x=0;
+		   				}
+					}
+				}
+				
+				if(this.time%200==0){
+					var monster = new Monster(monster_value)
+	   					monsters[monsters.length] = monster;
+				}
+			}
+		}
+		//保存图片的构造函数
+		var game_bg = new Image();
+	 		game_bg.src = "img/NPC2.png";
+	 	//初始化数据
+	 	var game_value = {
+	 		image:game_bg,
+	 		width:40,
+	 		height:65
+	 	};
+	 	//存放怪物的数组
+	 	var monsters = [];
+
+	 	var game = new GAME_1(game_value);
+
+
+
+		window.onkeydown=function(){
+			if(state == RUNNING){
+
+			}else{
+				var keynum="";
+				var e = window.event||arguments[0];
+				if(window.event){
+					keynum=e.keyCode;
+				}else if(e.which){
+				 	keynum=e.which;
+				}
+				//这里数组用来保存按键的编码方便后面判断
+				var keyCanMove = [40,37,39,38];
+								//下 左 右 上
+								
+				for(var i=0;i<keyCanMove.length;i++){
+					(function(i){
+						if(keynum == keyCanMove[1]){
+							game.sx -= 2;
+							if(game.sx < 0){
+								game.sx = 0;
+							}
+						};
+						if(keynum == keyCanMove[2]){
+							game.sx += 2;
+							if(game.sx > 1024-40){
+								game.sx = 1024-40;
+							}
+						};
+						if(keynum == keyCanMove[3]){
+							if(game.sy >= 520){
+								game.sy = 320;
+							}
+							var itmes = setInterval(function(){
+								if(game.sy < 520){
+									game.sy++
+								}else{
+									clearInterval(itmes);
+								};
+							},20)
+						}
+						
+					})(i)
+				}
+			}
+		}
+			
+
+		
+
+
+		function Monster(value){
+			this.image = value.image;
+			this.width = value.width;
+			this.height = value.height;
+			this.x = 1024;
+			this.y = 520;
+			this.monster_delet = false;
+			//怪物绘制的方法
+			this.monster_run = function(){
+				context.drawImage(this.image,this.x,this.y);
+			}
+			//移动怪物的方法
+			this.run = function(){
+				this.x-=2;
+			}
+			this.delet = function(){
+				this.monster_delet = true
+			}
+		}
+		var monster_img = new Image();
+			monster_img.src = "img/guaiwu-1.gif"
+		var monster_value = {
+			image:monster_img,
+			width:125,
+			height:87
+		}
+
+		
+		//绘制所有怪物；
+		var monsters_create = function(){
+			for(var i = 0; i<monsters.length; i++){
+				monsters[i].monster_run();
+			}
+		}
+		//移动所有怪物
+		var monsters_left = function(){
+			for(var i = 0; i<monsters.length; i++){
+				monsters[i].run();
+			}
+		}
+		//判断怪物后删除
+		var monster_delets = function(){
+			for(var i = 0; i<monsters.length; i++){
+				if(monsters[i].x<= -monsters[i].width || monsters[i].monster_delet){
+					monsters.splice(i,1);
+					console.log(1);
+				}
+			}
+		}
+		//判断怪物是否撞到人了
+		var pen = function(){
+			for(var i = 0; i<monsters.length; i++){
+				if(monsters[i].x < game.sx+40 && monsters[i].x > game.sx && monsters[i].y < game.sy+65 && monsters[i].y >= game.sy){
+					state = GAMEOVER
+				}
+			}
+		};
+		function paintText(){
+		context.font = "bold 60px 微软雅黑";
+		context.fillText("GAMEOVER",300,100);
+		}
+
+		var fox = 1;
+		setInterval(function(){
+			play_bg.xleft();
+			play_bg.step();
+		switch (state){
+			case START:
+				context.drawImage(play,300,200,400,100);
+				break;
+			case STARTTING:
+				game.run();
+				monsters_create();
+				monsters_left();
+				monster_delets();
+				pen();
+				break;
+			case RUNNING:
+				game.run(fox);
+				monsters_create();
+				break;
+			
+			case GAMEOVER:
+				paintText();
+				break;
+		}
+	},10);
+    </script>
+</html>
